@@ -7,3 +7,4 @@ colors
 inquirer
 readline
 websocket
+command-line-args
