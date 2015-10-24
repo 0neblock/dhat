@@ -63,21 +63,25 @@ wsServer.on('request', function(request) {
             var user = jsonM.user;
             clients.push(connection);
             connection.sendUTF(JSON.stringify({type: "loginAccept", user: user}));
+            connection.user = user;
             console.log('User connected: ' + user.username);
-            for(var i = 0; i < clients.length; i++){
-                clients[i].sendUTF(JSON.stringify({type: "system", message: {body: user.username + " has Joined the Chatroom!"}}));
-            }
+            broadcast({type: "system", message: {body: user.username + " has Joined the Chatroom!"}});
             
         }
         if(jsonM.type == "message"){
             console.log(jsonM.from.username + ' sent message: ' + jsonM.message.body);
-            for(var i = 0; i < clients.length; i++){
-                clients[i].sendUTF(JSON.stringify({type: "message", message: jsonM.message, user: jsonM.from}));
-            }
+            broadcast({type: "message", message: jsonM.message, user: jsonM.from});
         }
         
     });
     connection.on('close', function(reasonCode, description) {
         console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+        broadcast({type: "system", message: {body: connection.user.username + " has left the Chatroom!"}});
     });
 });
+
+function broadcast(message){
+    for(var i = 0; i < clients.length; i++){
+        clients[i].sendUTF(JSON.stringify(message));
+    }
+}

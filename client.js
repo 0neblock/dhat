@@ -54,7 +54,7 @@ client.on('connect', function(connection) {
         write("Connection Error: " + error.toString());
     });
     connection.on('close', function() {
-        write('echo-protocol Connection Closed');
+        write('Lost connection to server');
     });
     connection.on('message', function(message){
         var jsonM = JSON.parse(message.utf8Data);
