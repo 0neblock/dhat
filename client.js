@@ -4,6 +4,17 @@ var readline = require("readline");
 var Server = require("./serverObject")
 var colors = require("colors");
 
+var commandLineArgs = require("command-line-args");
+ 
+var cli = commandLineArgs([
+    { name: "ip", alias: "h", type: String },
+    { name: "port", alias: "p", type: String },
+    { name: "username", alias: "u", type: String },
+    { name: "password", type: String }
+]);
+
+var options = cli.parse();
+
 
 var rl = readline.createInterface({
   input: process.stdin,
@@ -14,27 +25,37 @@ var user = null;
 var IP = "";
 var server = null;
 function getHostDetails(callback){
-    rl.question("Please enter the IP to connect to: ", function(answer){
-        if(!answer.match(/^([0-9]{1,3}\.){3}[0-9]{1,3}$/)){
-            console.log("Incorrect IP".red);
-            getHostDetails(callback);
-            return;
-        }
-        IP = answer.trim();
+    if(!options.ip){
+        rl.question("Please enter the IP to connect to: ", function(answer){
+            if(!answer.match(/^([0-9]{1,3}\.){3}[0-9]{1,3}$/)){
+                console.log("Incorrect IP".red);
+                getHostDetails(callback);
+                return;
+            }
+            IP = answer.trim();
+            getPort(callback);
+        });
+    } else {
+        IP = options.ip;
         getPort(callback);
-    });
+    }
 }
 
 function getPort(callback){
-    rl.question("Please enter the PORT to connect to: ", function(answer){
-        if(!answer.match(/^[0-9]{4}$/)){
-            console.log("Incorrect Port".red);
-            getPort(callback);
-            return;
-        }
-        server = new Server(IP, answer.trim());
+    if(!options.port){
+        rl.question("Please enter the PORT to connect to: ", function(answer){
+            if(!answer.match(/^[0-9]{4}$/)){
+                console.log("Incorrect Port".red);
+                getPort(callback);
+                return;
+            }
+            server = new Server(IP, answer.trim());
+            callback(server);
+        });
+    } else {
+        server = new Server(IP, options.port);
         callback(server);
-    })
+    }
 }
 
 getHostDetails(function(server){
@@ -61,14 +82,28 @@ client.on('connect', function(connection) {
         switch(jsonM.type){
             case "auth":
                 // We need to auth
-                rl.question("Please enter Username to authenticate with: ", function(answer){
-                      var username = answer;
+                if(!options.username){
+                    rl.question("Please enter Username to authenticate with: ", function(answer){
+                          var username = answer;
+                            rl.question("Enter Password: ", function(answer){
+                                var password = answer;
+                                console.log("Authenticating...");
+                                server.connection.send(JSON.stringify({type: "auth", user: {username: username, password: password}}));
+                            });
+                    });
+                } else {
+                    console.log("Logging in as " + options.username);
+                    if(!options.password){
                         rl.question("Enter Password: ", function(answer){
                             var password = answer;
                             console.log("Authenticating...");
-                            server.connection.send(JSON.stringify({type: "auth", user: {username: username, password: password}}));
+                            server.connection.send(JSON.stringify({type: "auth", user: {username: options.username, password: password}}));
                         });
-                })
+                    } else {
+                        console.log("Authenticating...");
+                        server.connection.send(JSON.stringify({type: "auth", user: {username: options.username, password: options.password}}));
+                    }
+                }
             break;
             case "failedLogin":
                 console.log("Login Failed :()");

@@ -7,6 +7,8 @@ server.listen(7994, function() {
 });
 var users = [];
 var clients = [];
+
+
  
 wsServer = new WebSocketServer({
     httpServer: server,
