@@ -76,7 +76,9 @@ wsServer.on('request', function(request) {
     });
     connection.on('close', function(reasonCode, description) {
         console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
-        broadcast({type: "system", message: {body: connection.user.username + " has left the Chatroom!"}});
+        if(connection.user){
+            broadcast({type: "system", message: {body: connection.user.username + " has left the Chatroom!"}});
+        }
     });
 });
 
