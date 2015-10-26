@@ -3,6 +3,7 @@ var client = new WebSocketClient();
 var readline = require("readline");
 var Server = require("./serverObject")
 var colors = require("colors");
+var player = require("play-sound")(opts = {});
 
 var commandLineArgs = require("command-line-args");
  
@@ -15,6 +16,7 @@ var cli = commandLineArgs([
 
 var options = cli.parse();
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
 var rl = readline.createInterface({
   input: process.stdin,
@@ -92,16 +94,22 @@ client.on('connect', function(connection) {
                             });
                     });
                 } else {
+                    // Delete saved username so we can logout in the same session
+                    
                     console.log("Logging in as " + options.username);
                     if(!options.password){
                         rl.question("Enter Password: ", function(answer){
                             var password = answer;
                             console.log("Authenticating...");
                             server.connection.send(JSON.stringify({type: "auth", user: {username: options.username, password: password}}));
+                            options.username = null;
                         });
                     } else {
+                        
                         console.log("Authenticating...");
                         server.connection.send(JSON.stringify({type: "auth", user: {username: options.username, password: options.password}}));
+                        options.password = null;
+                        options.username = null;
                     }
                 }
             break;
@@ -114,6 +122,9 @@ client.on('connect', function(connection) {
                     write(colors.green(jsonM.user.username));
                 } else {
                     write(colors.gray(jsonM.user.username));
+                    player.play("ohyeah.mp3", function(err){
+                        if(err) console.log(err);
+                    })
                 }
                 write(jsonM.message.body);
                 write("");
@@ -128,7 +139,7 @@ client.on('connect', function(connection) {
                     process.stdout.moveCursor(0, -1);
                     process.stdout.clearLine();
                     if(data.trim() != ""){
-                        sendMessage(data.trim());
+                        processMessage(data.trim());
                     }
                 })
             break;
@@ -145,6 +156,25 @@ function write(d){
     console.log(d);
 }
 
+
+function processMessage(d){
+    switch(d.charAt(0)){
+        case '$':
+            // System message, perform action
+            switch(d){
+                case '$logout':
+                case '$logoff':
+                    
+                    server.connection.send(JSON.stringify({type: "logout"}));
+                    console.log("Logged out.".yellow);
+                break;
+            }
+        break;
+        default:
+            sendMessage(d);
+        break;
+    }
+}
 
 function sendMessage(d){
     if(server.ready){
