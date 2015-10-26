@@ -3,8 +3,4 @@ Daemon-Chat
 
 #Node Modules needed:
 
-colors
-inquirer
-readline
-websocket
-command-line-args
+npm install colors inquirer readline websocket command-line-args play-sound
