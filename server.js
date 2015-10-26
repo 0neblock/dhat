@@ -1,7 +1,11 @@
 var WebSocketServer = require('websocket').server;
 var User = require("./user");
-var http = require("http");
-var server = http.createServer();
+var https = require("https");
+var fs = require("fs");
+var server = https.createServer({
+    key: fs.readFileSync("./key.pem"),
+    cert: fs.readFileSync("./csr.pem")
+});
 server.listen(7994, function() {
     console.log((new Date()) + ' Server is listening on port 7994');
 });
@@ -63,7 +67,10 @@ wsServer.on('request', function(request) {
             } 
             
             var user = jsonM.user;
-            clients.push(connection);
+            if(clients.indexOf(connection) <= -1){
+                clients.push(connection);
+            }
+            
             connection.sendUTF(JSON.stringify({type: "loginAccept", user: user}));
             connection.user = user;
             console.log('User connected: ' + user.username);
@@ -74,11 +81,17 @@ wsServer.on('request', function(request) {
             console.log(jsonM.from.username + ' sent message: ' + jsonM.message.body);
             broadcast({type: "message", message: jsonM.message, user: jsonM.from});
         }
+        if(jsonM.type == "logout"){
+            console.log(connection.user.username + " has left the Chatroom!");
+            connection.user = null;
+            connection.sendUTF(JSON.stringify({type: "auth"}));
+        }
         
     });
     connection.on('close', function(reasonCode, description) {
         console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
         if(connection.user){
+            console.log(connection.user.username + " has left the Chatroom!");
             broadcast({type: "system", message: {body: connection.user.username + " has left the Chatroom!"}});
         }
     });

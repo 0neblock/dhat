@@ -5,7 +5,7 @@ function Server(host, port){
     this.ready = false;
     
     this.getURL = function(){
-        return "ws://" + host + ":" + port + "/";
+        return "wss://" + host + ":" + port + "/";
     }
     
     this.setConnection = function(connection){
