@@ -4,6 +4,7 @@ var readline = require("readline");
 var Server = require("./serverObject")
 var colors = require("colors");
 var player = require("play-sound")(opts = {});
+const exec = require('child_process').exec;
 
 var commandLineArgs = require("command-line-args");
  
@@ -122,10 +123,12 @@ client.on('connect', function(connection) {
                     write(colors.green(jsonM.user.username));
                 } else {
                     write(colors.gray(jsonM.user.username));
-                    player.play("ohyeah.mp3", function(err){
-                        if(err) console.log(err);
-                    })
+//                    player.play("ohyeah.mp3", function(err){
+//                        if(err) console.log(err);
+//                    })
+                    exec("say -v Fred '" + jsonM.message.body + "'");
                 }
+                
                 write(jsonM.message.body);
                 write("");
             break;
