@@ -8,14 +8,14 @@ const exec = require('child_process').exec;
 
 var commandLineArgs = require("command-line-args");
  
-var cli = commandLineArgs([
+var cli = [
     { name: "ip", alias: "h", type: String },
     { name: "port", alias: "p", type: String },
     { name: "username", alias: "u", type: String },
     { name: "password", type: String }
-]);
+];
 
-var options = cli.parse();
+var options = commandLineArgs(cli);
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
